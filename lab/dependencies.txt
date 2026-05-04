@@ -1,6 +1,0 @@
-pip install qiskit
-pip install 'qiskit[visualization]'
-pip install matplotlib
-pip install qiskit-ibm-runtime
-pip install qiskit-aer
-pip install pennylane

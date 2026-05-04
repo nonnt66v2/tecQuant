@@ -1,0 +1,39 @@
+{
+  "channels": [
+    {"id": 0, "cvss": 0.9, "exploit_prob": 0.8, "patch_lag": 0.7, "exposure": 0.9, "latency": 0.6, "jitter": 0.5, "loss": 0.4, "compliance": 0.0, "group": "A"},
+    {"id": 1, "cvss": 0.3, "exploit_prob": 0.2, "patch_lag": 0.4, "exposure": 0.3, "latency": 0.2, "jitter": 0.3, "loss": 0.2, "compliance": 0.0, "group": "B"},
+    {"id": 2, "cvss": 0.6, "exploit_prob": 0.7, "patch_lag": 0.5, "exposure": 0.6, "latency": 0.4, "jitter": 0.5, "loss": 0.6, "compliance": 0.5, "group": "A"},
+    {"id": 3, "cvss": 0.2, "exploit_prob": 0.3, "patch_lag": 0.2, "exposure": 0.4, "latency": 0.3, "jitter": 0.2, "loss": 0.3, "compliance": 0.0, "group": "C"},
+    {"id": 4, "cvss": 0.8, "exploit_prob": 0.9, "patch_lag": 0.8, "exposure": 0.7, "latency": 0.7, "jitter": 0.8, "loss": 0.7, "compliance": 1.0, "group": "B"},
+    {"id": 5, "cvss": 0.4, "exploit_prob": 0.4, "patch_lag": 0.3, "exposure": 0.5, "latency": 0.5, "jitter": 0.4, "loss": 0.5, "compliance": 0.2, "group": "B"}
+  ],
+  "correlations": [
+    {"i": 0, "j": 2, "score": 0.7},
+    {"i": 0, "j": 4, "score": 0.8},
+    {"i": 1, "j": 4, "score": 0.6},
+    {"i": 1, "j": 5, "score": 0.5},
+    {"i": 2, "j": 4, "score": 0.7},
+    {"i": 3, "j": 4, "score": 0.3},
+    {"i": 4, "j": 5, "score": 0.6}
+  ],
+  "constraints": {
+    "K": 3,
+    "weights": {
+      "alpha": 1.0,
+      "beta": 0.8,
+      "gamma": 0.4,
+      "delta": 0.7,
+      "A": 6.0,
+      "B": 3.0
+    },
+    "internal_weights": {
+      "w_cvss": 0.35,
+      "w_expl": 0.25,
+      "w_patch": 0.20,
+      "w_expo": 0.20,
+      "w_lat": 0.5,
+      "w_jit": 0.3,
+      "w_loss": 0.2
+    }
+  }
+}
