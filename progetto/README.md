@@ -8,8 +8,9 @@
 #### voto finale: 1+2+orale
 
 ## QFPUF (Qiskit + NetSquid)
-La pipeline QFPUF usa Qiskit per generare le challenge circuit e NetSquid per
-l'autenticazione/verification. La configurazione è riproducibile tramite seed.
+La pipeline QFPUF usa Qiskit per generare challenge esplicite (bitstring + angoli)
+e un noise model Aer per simulare istanze PUF rumorose. La configurazione è
+riproducibile tramite seed.
 
 ### Dipendenze
 ```bash
@@ -21,8 +22,10 @@ verificare con `requirements-netsquid.txt`.
 
 ### Esecuzione rapida
 ```bash
-python progetto/scripts/run_qfpuf_pipeline.py --config progetto/qfpuf_config.json
+python progetto/scripts/run_qfpuf_pipeline.py --config progetto/qfpuf_config.json --mode full
+python progetto/scripts/run_qfpuf_pipeline.py --config progetto/qfpuf_config.json --mode enroll
+python progetto/scripts/run_qfpuf_pipeline.py --config progetto/qfpuf_config.json --mode verify
 python progetto/scripts/validate_qfpuf.py
 ```
 
-Output: `progetto/risultati/qfpuf/`.
+Output: `progetto/risultati/qfpuf/` con database di enrollment e report di verifica.
