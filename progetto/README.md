@@ -27,6 +27,11 @@ python progetto/scripts/run_qfpuf_pipeline.py --config progetto/qfpuf_config.jso
 python progetto/scripts/run_qfpuf_pipeline.py --config progetto/qfpuf_config.json --mode verify
 python progetto/scripts/validate_qfpuf.py
 python progetto/scripts/visualize_qfpuf_results.py --enrollment progetto/risultati/qpuf/qfpuf_enrollment.json --verification progetto/risultati/qpuf/qfpuf_verification.json --open
+python progetto/scripts/cross_verify_chips.py --chip ChipA=42 --chip ChipB=1337 --chip ChipC=2024 --html progetto/risultati/qpuf/qfpuf_cross_matrix.html
 ```
+
+La cross-verification esegue le sfide di ogni chip arruolato sotto il noise model
+di ogni altro chip: la diagonale (chip legittimo) deve avere Fidelity alta, mentre
+le celle fuori diagonale (tentativi di spoofing) devono restare sotto la soglia.
 
 Output: `progetto/risultati/qfpuf/` con database di enrollment e report di verifica.
