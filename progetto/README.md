@@ -26,6 +26,7 @@ python progetto/scripts/run_qfpuf_pipeline.py --config progetto/qfpuf_config.jso
 python progetto/scripts/run_qfpuf_pipeline.py --config progetto/qfpuf_config.json --mode enroll
 python progetto/scripts/run_qfpuf_pipeline.py --config progetto/qfpuf_config.json --mode verify
 python progetto/scripts/validate_qfpuf.py
+python progetto/scripts/compare_qfpuf_results.py --enrollment progetto/risultati/qpuf/qfpuf_enrollment.json --verification progetto/risultati/qpuf/qfpuf_verification.json
 python progetto/scripts/visualize_qfpuf_results.py --enrollment progetto/risultati/qpuf/qfpuf_enrollment.json --verification progetto/risultati/qpuf/qfpuf_verification.json --open
 ```
 
