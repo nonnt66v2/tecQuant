@@ -21,7 +21,7 @@
     "gate_time_2q": 300.0,
     "variation": 0.15
   },
-  "fidelity_threshold": 0.75,
+  "fidelity_threshold": 0.88,
   "qber_threshold": 0.30,
   "output_dir": "progetto/risultati/qfpuf",
   "enrollment_db_path": "progetto/risultati/qfpuf/qfpuf_enrollment.json",

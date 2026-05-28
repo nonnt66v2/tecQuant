@@ -73,14 +73,15 @@ def _cross_matrix(
             cfg = _chip_config(config, executed_chip)
             cfg = dataclasses.replace(cfg, verification_instance_seed=executed_chip["seed"])
             report = run_verification(cfg, enrollment)
+            fidelity = report["average_fidelity"]
             cells.append(
                 {
                     "enrolled": enrolled_name,
                     "executed": executed_name,
                     "legitimate": enrolled_name == executed_name,
-                    "average_fidelity": report["average_fidelity"],
+                    "average_fidelity": fidelity,
                     "average_qber": report["average_qber"],
-                    "accepted": report["accepted"],
+                    "accepted": fidelity >= config.fidelity_threshold,
                 }
             )
     return cells
