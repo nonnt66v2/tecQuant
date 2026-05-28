@@ -7,50 +7,72 @@ import json
 import sys
 import webbrowser
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.append(str(ROOT))
 
 from progetto.qfpuf import QFPUFConfig, load_config, run_enrollment, run_verification
+from progetto.qfpuf.config import NoiseConfig
 
 
-def _parse_chips(values: List[str]) -> Dict[str, int]:
-    chips: Dict[str, int] = {}
+def _parse_chips(values: List[str]) -> Dict[str, Dict[str, Any]]:
+    chips: Dict[str, Dict[str, Any]] = {}
     for item in values:
-        if "=" not in item:
-            raise ValueError(f"Invalid chip spec '{item}', expected NAME=SEED")
-        name, seed = item.split("=", 1)
+        noise_overrides: Dict[str, float] = {}
+        if ":" in item:
+            id_part, noise_part = item.split(":", 1)
+            for kv in noise_part.split(","):
+                if "=" not in kv:
+                    continue
+                k, v = kv.split("=", 1)
+                noise_overrides[k.strip()] = float(v.strip())
+        else:
+            id_part = item
+
+        if "=" not in id_part:
+            raise ValueError(f"Invalid chip spec '{item}', expected NAME=SEED or NAME=SEED:key=val,...")
+        name, seed = id_part.split("=", 1)
         name = name.strip()
         if not name:
-            raise ValueError(f"Invalid chip name in '{item}'")
-        chips[name] = int(seed)
+            raise ValueError(f"Empty chip name in '{item}'")
+        chips[name] = {"seed": int(seed), "noise_overrides": noise_overrides}
     return chips
 
 
+def _chip_config(config: QFPUFConfig, chip: Dict[str, Any]) -> QFPUFConfig:
+    overrides = chip.get("noise_overrides", {})
+    if overrides:
+        noise_dict = dataclasses.asdict(config.noise)
+        noise_dict.update(overrides)
+        chip_noise = NoiseConfig(**noise_dict)
+        return dataclasses.replace(config, noise=chip_noise)
+    return config
+
+
 def _enroll_chips(
-    config: QFPUFConfig, chips: Dict[str, int]
+    config: QFPUFConfig, chips: Dict[str, Dict[str, Any]]
 ) -> Dict[str, Dict[str, Any]]:
     enrollments: Dict[str, Dict[str, Any]] = {}
-    for name, seed in chips.items():
-        chip_config = dataclasses.replace(config, enrollment_instance_seed=seed)
-        enrollments[name] = run_enrollment(chip_config)
+    for name, chip in chips.items():
+        cfg = _chip_config(config, chip)
+        cfg = dataclasses.replace(cfg, enrollment_instance_seed=chip["seed"])
+        enrollments[name] = run_enrollment(cfg)
     return enrollments
 
 
 def _cross_matrix(
     config: QFPUFConfig,
-    chips: Dict[str, int],
+    chips: Dict[str, Dict[str, Any]],
     enrollments: Dict[str, Dict[str, Any]],
 ) -> List[Dict[str, Any]]:
     cells: List[Dict[str, Any]] = []
-    for enrolled_name in chips:
+    for enrolled_name, enrolled_chip in chips.items():
         enrollment = enrollments[enrolled_name]
-        for executed_name, executed_seed in chips.items():
-            verify_config = dataclasses.replace(
-                config, verification_instance_seed=executed_seed
-            )
-            report = run_verification(verify_config, enrollment)
+        for executed_name, executed_chip in chips.items():
+            cfg = _chip_config(config, executed_chip)
+            cfg = dataclasses.replace(cfg, verification_instance_seed=executed_chip["seed"])
+            report = run_verification(cfg, enrollment)
             cells.append(
                 {
                     "enrolled": enrolled_name,
@@ -68,10 +90,12 @@ def _matrix_lookup(cells: List[Dict[str, Any]]) -> Dict[Tuple[str, str], Dict[st
     return {(cell["enrolled"], cell["executed"]): cell for cell in cells}
 
 
-def _print_matrix(chips: Dict[str, int], cells: List[Dict[str, Any]]) -> None:
+def _print_matrix(chips: Dict[str, Dict[str, Any]], cells: List[Dict[str, Any]]) -> None:
     lookup = _matrix_lookup(cells)
     names = list(chips)
     width = max((len(name) for name in names), default=4) + 2
+
+    print("Fidelity matrix:")
     header = "enroll \\ exec".ljust(width) + "".join(name.ljust(width) for name in names)
     print(header)
     for enrolled in names:
@@ -82,8 +106,7 @@ def _print_matrix(chips: Dict[str, int], cells: List[Dict[str, Any]]) -> None:
         print(row)
 
     print()
-    print("Acceptance (1 = authenticated):")
-    header = "enroll \\ exec".ljust(width) + "".join(name.ljust(width) for name in names)
+    print("Acceptance (1=OK, 0=REJECT):")
     print(header)
     for enrolled in names:
         row = enrolled.ljust(width)
@@ -94,14 +117,12 @@ def _print_matrix(chips: Dict[str, int], cells: List[Dict[str, Any]]) -> None:
 
 
 def _summary(cells: List[Dict[str, Any]]) -> Dict[str, Any]:
-    legit = [cell for cell in cells if cell["legitimate"]]
-    impostor = [cell for cell in cells if not cell["legitimate"]]
+    legit = [c for c in cells if c["legitimate"]]
+    impostor = [c for c in cells if not c["legitimate"]]
 
     def _avg(items: List[Dict[str, Any]], key: str) -> float:
         return sum(item[key] for item in items) / len(items) if items else 0.0
 
-    false_rejects = sum(1 for cell in legit if not cell["accepted"])
-    false_accepts = sum(1 for cell in impostor if cell["accepted"])
     return {
         "legitimate_pairs": len(legit),
         "impostor_pairs": len(impostor),
@@ -109,8 +130,8 @@ def _summary(cells: List[Dict[str, Any]]) -> Dict[str, Any]:
         "avg_fidelity_impostor": _avg(impostor, "average_fidelity"),
         "avg_qber_legitimate": _avg(legit, "average_qber"),
         "avg_qber_impostor": _avg(impostor, "average_qber"),
-        "false_rejects": false_rejects,
-        "false_accepts": false_accepts,
+        "false_rejects": sum(1 for c in legit if not c["accepted"]),
+        "false_accepts": sum(1 for c in impostor if c["accepted"]),
     }
 
 
@@ -119,14 +140,14 @@ def _heatmap_color(value: float, vmin: float, vmax: float) -> str:
         ratio = 0.0
     else:
         ratio = max(0.0, min(1.0, (value - vmin) / (vmax - vmin)))
-    red = int(220 - ratio * (220 - 37))
-    green = int(38 + ratio * (197 - 38))
-    blue = int(38 + ratio * (94 - 38))
-    return f"rgb({red},{green},{blue})"
+    r = int(220 - ratio * (220 - 37))
+    g = int(38 + ratio * (197 - 38))
+    b = int(38 + ratio * (94 - 38))
+    return f"rgb({r},{g},{b})"
 
 
 def _render_html(
-    chips: Dict[str, int],
+    chips: Dict[str, Dict[str, Any]],
     cells: List[Dict[str, Any]],
     summary: Dict[str, Any],
     threshold: float,
@@ -153,6 +174,15 @@ def _render_html(
             )
         rows.append("<tr>" + "".join(row) + "</tr>")
 
+    chip_profiles = ""
+    for name, chip in chips.items():
+        overrides = chip.get("noise_overrides", {})
+        if overrides:
+            items = ", ".join(f"{k}={v}" for k, v in overrides.items())
+            chip_profiles += f"<li><b>{html.escape(name)}</b> (seed {chip['seed']}): {html.escape(items)}</li>"
+        else:
+            chip_profiles += f"<li><b>{html.escape(name)}</b> (seed {chip['seed']}): base config</li>"
+
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -174,6 +204,7 @@ def _render_html(
     .card {{ border:1px solid #d0d7de; border-radius:12px; padding:12px; }}
     .card .lbl {{ font-size:12px; color:#6b7280; }}
     .card .num {{ font-size:22px; font-weight:700; }}
+    ul {{ font-size:12px; color:#6b7280; margin:8px 0 0 0; padding-left:18px; }}
   </style>
 </head>
 <body>
@@ -185,6 +216,7 @@ def _render_html(
         Diagonal (bold border) = legitimate; off-diagonal = spoofing attempt.<br>
         Acceptance threshold: fidelity &ge; {threshold:.3f}.
       </div>
+      <ul>{chip_profiles}</ul>
       <div class="metrics">
         <div class="card"><div class="lbl">Avg fidelity legitimate</div><div class="num">{summary['avg_fidelity_legitimate']:.3f}</div></div>
         <div class="card"><div class="lbl">Avg fidelity impostor</div><div class="num">{summary['avg_fidelity_impostor']:.3f}</div></div>
@@ -206,42 +238,37 @@ def _render_html(
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Run QFPUF cross-verification across multiple simulated chips"
+        description="QFPUF cross-verification across multiple simulated chips"
     )
     parser.add_argument(
         "--config",
         type=Path,
         default=Path("progetto/qfpuf_config.json"),
-        help="Path to QFPUF config JSON",
     )
     parser.add_argument(
         "--chip",
         action="append",
         default=None,
-        metavar="NAME=SEED",
-        help="Chip definition as NAME=SEED (repeatable)",
+        metavar="NAME=SEED[:key=val,...]",
+        help="Chip definition with optional per-chip noise overrides",
     )
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("progetto/risultati/qpuf/qfpuf_cross_matrix.json"),
-        help="Path for the cross-verification JSON result",
+        default=Path("progetto/risultati/qfpuf/qfpuf_cross_matrix.json"),
     )
-    parser.add_argument(
-        "--html",
-        type=Path,
-        default=None,
-        help="Optional path for an HTML heatmap of the matrix",
-    )
-    parser.add_argument(
-        "--open",
-        action="store_true",
-        help="Open the generated HTML report in a browser",
-    )
+    parser.add_argument("--html", type=Path, default=None)
+    parser.add_argument("--open", action="store_true")
     args = parser.parse_args()
 
     config = load_config(args.config)
-    chip_specs = args.chip or ["ChipA=42", "ChipB=1337", "ChipC=2024"]
+
+    default_chips = [
+        "ChipA=42:t1=80000,t2=110000,depolarizing_1q=0.001,depolarizing_2q=0.008",
+        "ChipB=1337:t1=22000,t2=32000,depolarizing_1q=0.009,depolarizing_2q=0.07",
+        "ChipC=2024:t1=55000,t2=75000,depolarizing_1q=0.004,depolarizing_2q=0.03",
+    ]
+    chip_specs = args.chip or default_chips
     chips = _parse_chips(chip_specs)
     if len(chips) < 2:
         raise SystemExit("Provide at least two chips to compare")
@@ -253,20 +280,14 @@ def main() -> None:
     _print_matrix(chips, cells)
     print()
     print(
-        f"Legitimate avg fidelity: {summary['avg_fidelity_legitimate']:.4f} | "
-        f"Impostor avg fidelity: {summary['avg_fidelity_impostor']:.4f}"
-    )
-    print(
-        f"False accepts: {summary['false_accepts']} | "
-        f"False rejects: {summary['false_rejects']}"
+        f"Legitimate avg fidelity : {summary['avg_fidelity_legitimate']:.4f}\n"
+        f"Impostor  avg fidelity  : {summary['avg_fidelity_impostor']:.4f}\n"
+        f"False accepts : {summary['false_accepts']} | False rejects : {summary['false_rejects']}"
     )
 
     payload = {
-        "chips": chips,
-        "thresholds": {
-            "fidelity": config.fidelity_threshold,
-            "qber": config.qber_threshold,
-        },
+        "chips": {name: {**chip, "noise_overrides": chip["noise_overrides"]} for name, chip in chips.items()},
+        "thresholds": {"fidelity": config.fidelity_threshold, "qber": config.qber_threshold},
         "matrix": cells,
         "summary": summary,
     }
