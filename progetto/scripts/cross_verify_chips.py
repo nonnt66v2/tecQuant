@@ -167,10 +167,11 @@ def _render_html(
             color = _heatmap_color(value, vmin, vmax)
             border = "3px solid #111827" if cell["legitimate"] else "1px solid #e5e7eb"
             mark = "OK" if cell["accepted"] else "REJECT"
+            qber = cell["average_qber"]
             row.append(
                 f'<td style="background:{color};border:{border}">'
                 f'<div class="val">{value:.3f}</div>'
-                f'<div class="tag">{mark}</div></td>'
+                f'<div class="tag">QBER {qber:.2f} · {mark}</div></td>'
             )
         rows.append("<tr>" + "".join(row) + "</tr>")
 
@@ -264,9 +265,9 @@ def main() -> None:
     config = load_config(args.config)
 
     default_chips = [
-        "ChipA=42:t1=80000,t2=110000,depolarizing_1q=0.001,depolarizing_2q=0.008",
-        "ChipB=1337:t1=22000,t2=32000,depolarizing_1q=0.009,depolarizing_2q=0.07",
-        "ChipC=2024:t1=55000,t2=75000,depolarizing_1q=0.004,depolarizing_2q=0.03",
+        "ChipA=42:t1=25000,t2=35000,depolarizing_1q=0.008,depolarizing_2q=0.08",
+        "ChipB=1337:t1=8000,t2=12000,depolarizing_1q=0.015,depolarizing_2q=0.22",
+        "ChipC=2024:t1=600000,t2=800000,depolarizing_1q=0.00005,depolarizing_2q=0.0003",
     ]
     chip_specs = args.chip or default_chips
     chips = _parse_chips(chip_specs)

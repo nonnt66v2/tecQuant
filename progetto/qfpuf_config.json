@@ -1,6 +1,6 @@
 {
   "num_qubits": 4,
-  "depth": 4,
+  "depth": 8,
   "seed": 42,
   "shots": 512,
   "challenge_config": {
@@ -13,8 +13,8 @@
   "enrollment_instance_seed": 42,
   "verification_instance_seed": 42,
   "noise": {
-    "depolarizing_1q": 0.003,
-    "depolarizing_2q": 0.025,
+    "depolarizing_1q": 0.005,
+    "depolarizing_2q": 0.03,
     "t1": 50000.0,
     "t2": 70000.0,
     "gate_time_1q": 50.0,
@@ -22,7 +22,7 @@
     "variation": 0.15
   },
   "fidelity_threshold": 0.75,
-  "qber_threshold": 0.35,
+  "qber_threshold": 0.30,
   "output_dir": "progetto/risultati/qfpuf",
   "enrollment_db_path": "progetto/risultati/qfpuf/qfpuf_enrollment.json",
   "verification_report_path": "progetto/risultati/qfpuf/qfpuf_verification.json"
