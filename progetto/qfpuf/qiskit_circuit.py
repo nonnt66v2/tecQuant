@@ -1,38 +1,38 @@
 from __future__ import annotations
 
-import math
-import random
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, Optional
 
 from qiskit import QuantumCircuit, transpile
 from qiskit_aer import AerSimulator
+from qiskit_aer.noise import NoiseModel
+
+from .challenge import Challenge
 
 
 @dataclass(frozen=True)
 class ChallengeResult:
     counts: Dict[str, int]
+    probabilities: Dict[str, float]
     response: str
     shots: int
 
 
-def build_challenge_circuit(num_qubits: int, depth: int, seed: int) -> QuantumCircuit:
-    rng = random.Random(seed)
+def build_challenge_circuit(
+    num_qubits: int, depth: int, challenge: Challenge
+) -> QuantumCircuit:
+    challenge.validate(num_qubits)
     circuit = QuantumCircuit(num_qubits, name="qfpuf_challenge")
 
+    circuit.h(range(num_qubits))
+
     for _ in range(depth):
-        for qubit in range(num_qubits):
-            axis = rng.choice(["rx", "ry", "rz"])
-            angle = rng.random() * 2 * math.pi
-            getattr(circuit, axis)(angle, qubit)
+        for qubit in range(num_qubits - 1):
+            circuit.cx(qubit, qubit + 1)
 
-        for qubit in range(0, num_qubits - 1, 2):
-            if rng.random() < 0.7:
-                circuit.cx(qubit, qubit + 1)
-
-        if num_qubits > 2 and rng.random() < 0.5:
-            q1, q2 = rng.sample(range(num_qubits), 2)
-            circuit.cz(q1, q2)
+        for qubit, angle in enumerate(challenge.angles):
+            signed_angle = angle if challenge.bitstring[qubit] == "0" else -angle
+            circuit.ry(signed_angle, qubit)
 
     return circuit
 
@@ -52,13 +52,23 @@ def _select_response(counts: Dict[str, int]) -> str:
     return candidates[0]
 
 
+def _counts_to_probabilities(counts: Dict[str, int], shots: int) -> Dict[str, float]:
+    return {bitstring: count / shots for bitstring, count in counts.items()}
+
+
 def simulate_challenge(
-    circuit: QuantumCircuit, shots: int = 256, seed: int | None = None
+    circuit: QuantumCircuit,
+    shots: int = 256,
+    seed: int | None = None,
+    noise_model: Optional[NoiseModel] = None,
 ) -> ChallengeResult:
     measured = _prepare_measured_circuit(circuit)
-    simulator = AerSimulator(seed_simulator=seed)
+    simulator = AerSimulator(seed_simulator=seed, noise_model=noise_model)
     transpiled = transpile(measured, simulator, seed_transpiler=seed)
     result = simulator.run(transpiled, shots=shots).result()
     counts = result.get_counts(transpiled)
     response = _select_response(counts)
-    return ChallengeResult(counts=counts, response=response, shots=shots)
+    probabilities = _counts_to_probabilities(counts, shots)
+    return ChallengeResult(
+        counts=counts, probabilities=probabilities, response=response, shots=shots
+    )

@@ -1,2 +1,0 @@
-# NetSquid is distributed separately; install from the vendor package.
-netsquid==1.1.0
