@@ -105,19 +105,19 @@ def main() -> None:
     parser.add_argument(
         "--enrollment",
         type=Path,
-        default=Path("progetto/risultati/qpuf/qfpuf_enrollment.json"),
+        default=Path("/kaggle/working/tecQuant/progetto/risultati/qfpuf/qfpuf_enrollment.json"),
         help="Path to qfpuf_enrollment.json",
     )
     parser.add_argument(
         "--verification",
         type=Path,
-        default=Path("progetto/risultati/qpuf/qfpuf_verification.json"),
+        default=Path("/kaggle/working/tecQuant/progetto/risultati/qfpuf/qfpuf_verification.json"),
         help="Path to qfpuf_verification.json",
     )
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("progetto/risultati/qpuf/qfpuf_comparison_report.json"),
+        default=Path("/kaggle/working/tecQuant/progetto/risultati/qpuf/qfpuf_comparison_report.json"),
         help="Path for the generated comparison JSON report",
     )
     args = parser.parse_args()
