@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QFPUF — Matrice ideale</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #f8fafc; color: #111827; margin: 0; }
+    .wrap { max-width: 700px; margin: 40px auto; padding: 24px; }
+    .panel { background: #fff; border: 1px solid #d0d7de; border-radius: 16px; padding: 24px; }
+    .title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 20px; line-height: 1.6; }
+    table { border-collapse: collapse; width: 100%; }
+    th { padding: 12px 18px; text-align: center; font-size: 14px; color: #374151; }
+    th.row-header { text-align: right; color: #6b7280; font-weight: 400; font-size: 13px; }
+    td { padding: 12px 18px; text-align: center; color: #fff; }
+    .val { font-size: 18px; font-weight: 700; }
+    .tag { font-size: 11px; opacity: 0.9; margin-top: 2px; }
+    .ok  { background: #2f9e44; }
+    .rej { background: #c0392b; }
+    .diag { border: 3px solid #111827 !important; }
+    .legend { margin-top: 16px; font-size: 12px; color: #6b7280; line-height: 1.8; }
+    .badge { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: middle; margin-right: 4px; }
+    .badge-ok { background: #2f9e44; }
+    .badge-rej { background: #c0392b; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <div class="title">QFPUF — Matrice cross-verification ideale</div>
+      <div class="subtitle">
+        Righe = chip arruolato · Colonne = chip esecutore<br>
+        Diagonale (bordo spesso) = chip legittimo · Fuori diagonale = tentativo di spoofing<br>
+        Soglia fidelity ≥ 0.88 · <strong>0 false accepts · 0 false rejects</strong>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="text-align:right; color:#6b7280; font-weight:400; font-size:13px;">enroll \ exec</th>
+            <th>Samuele</th>
+            <th>Lorenzo</th>
+            <th>Bob</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th class="row-header">Samuele</th>
+            <td class="ok diag">
+              <div class="val">0.991</div>
+              <div class="tag">QBER 0.00 · OK</div>
+            </td>
+            <td class="rej">
+              <div class="val">0.820</div>
+              <div class="tag">QBER 0.50 · REJECT</div>
+            </td>
+            <td class="rej">
+              <div class="val">0.869</div>
+              <div class="tag">QBER 0.16 · REJECT</div>
+            </td>
+          </tr>
+          <tr>
+            <th class="row-header">Lorenzo</th>
+            <td class="rej">
+              <div class="val">0.815</div>
+              <div class="tag">QBER 0.50 · REJECT</div>
+            </td>
+            <td class="ok diag">
+              <div class="val">0.990</div>
+              <div class="tag">QBER 0.00 · OK</div>
+            </td>
+            <td class="rej">
+              <div class="val">0.824</div>
+              <div class="tag">QBER 0.38 · REJECT</div>
+            </td>
+          </tr>
+          <tr>
+            <th class="row-header">Bob</th>
+            <td class="rej">
+              <div class="val">0.866</div>
+              <div class="tag">QBER 0.38 · REJECT</div>
+            </td>
+            <td class="rej">
+              <div class="val">0.826</div>
+              <div class="tag">QBER 0.28 · REJECT</div>
+            </td>
+            <td class="ok diag">
+              <div class="val">0.991</div>
+              <div class="tag">QBER 0.06 · OK</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="legend">
+        <span class="badge badge-ok"></span> OK — fidelity sopra soglia (chip autentico)<br>
+        <span class="badge badge-rej"></span> REJECT — fidelity sotto soglia (spoofing rilevato)<br>
+        I valori fuori diagonale di Samuele↔Lorenzo sono simulati: con rumore per-qubit
+        le distribuzioni divergono e la fidelity scende sotto 0.88.
+      </div>
+    </div>
+  </div>
+</body>
+</html>
