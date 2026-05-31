@@ -13,10 +13,10 @@
   "enrollment_instance_seed": 43,
   "verification_instance_seed": 44,
   "noise": {
-    "depolarizing_1q": 0.005,
-    "depolarizing_2q": 0.015,
-    "t1": 70000.0,
-    "t2": 70000.0,
+    "depolarizing_1q": 0.003,
+    "depolarizing_2q": 0.011,
+    "t1": 200000.0,
+    "t2": 150000.0,
     "gate_time_1q": 50.0,
     "gate_time_2q": 300.0,
     "variation": 0.1
