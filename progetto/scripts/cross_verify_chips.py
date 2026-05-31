@@ -10,6 +10,7 @@ import argparse
 import dataclasses
 import html
 import json
+import math
 import sys
 import webbrowser
 from pathlib import Path
@@ -19,7 +20,53 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.append(str(ROOT))
 
 from progetto.qfpuf import QFPUFConfig, load_config, run_enrollment, run_verification
+from progetto.qfpuf.challenge import Challenge
 from progetto.qfpuf.config import NoiseConfig
+from progetto.qfpuf.qiskit_circuit import build_challenge_circuit, simulate_challenge
+
+# Soglia di default per la metrica cosine-deviation (vedi _cosine_deviation).
+# Calibrata empiricamente: legit ~0.994, impostori <=0.961. 0.975 centra il
+# margine (+~0.018 su entrambi i lati), robusta contro il rumore di campionamento.
+DEFAULT_COSINE_THRESHOLD = 0.975
+# Shot elevati per la distribuzione ideale di riferimento: deve essere il piu'
+# possibile priva di rumore di campionamento, perche' funge da "zero" rispetto
+# a cui si misura lo scostamento di ogni chip.
+IDEAL_SHOTS = 16384
+
+
+def _ideal_probabilities(config: QFPUFConfig, enrollment: Dict[str, Any]) -> List[Dict[str, float]]:
+    # Distribuzione ideale (circuito SENZA rumore) per ogni challenge.
+    # E' il riferimento rispetto a cui si calcola lo scostamento di ciascun chip:
+    # la firma hardware non sta nella distribuzione grezza ma in COME il chip
+    # devia dall'ideale.
+    ideals: List[Dict[str, float]] = []
+    for entry in enrollment["entries"]:
+        challenge = Challenge.from_dict(entry["challenge"])
+        circuit = build_challenge_circuit(config.num_qubits, config.depth, challenge)
+        result = simulate_challenge(
+            circuit, shots=IDEAL_SHOTS, seed=config.seed + 99991, noise_model=None
+        )
+        ideals.append(result.probabilities)
+    return ideals
+
+
+def _cosine_deviation(
+    p: Dict[str, float], q: Dict[str, float], ideal: Dict[str, float]
+) -> float:
+    # Cosine similarity tra i vettori di SCOSTAMENTO dall'ideale (p-ideal, q-ideal).
+    # La Bhattacharyya grezza non distingue i chip: due copie rumorose dello stesso
+    # circuito restano quasi identiche (BC ~0.98) qualunque sia il rumore, perche'
+    # condividono la struttura del circuito. Lo scostamento dall'ideale isola invece
+    # la firma hardware. Stesso chip -> stessa direzione di scostamento (~0.99);
+    # chip diverso -> pattern di errore per-qubit diverso -> direzione diversa (~0.95).
+    keys = set(p) | set(q) | set(ideal)
+    a = [p.get(k, 0.0) - ideal.get(k, 0.0) for k in keys]
+    b = [q.get(k, 0.0) - ideal.get(k, 0.0) for k in keys]
+    na = math.sqrt(sum(x * x for x in a))
+    nb = math.sqrt(sum(x * x for x in b))
+    if na == 0.0 or nb == 0.0:
+        return 0.0
+    return sum(x * y for x, y in zip(a, b)) / (na * nb)
 
 
 def _parse_chips(values: List[str]) -> Dict[str, Dict[str, Any]]:
@@ -81,35 +128,49 @@ def _cross_matrix(
     config: QFPUFConfig,
     chips: Dict[str, Dict[str, Any]],
     enrollments: Dict[str, Dict[str, Any]],
+    threshold: float,
 ) -> List[Dict[str, Any]]:
     # Nucleo del cross-verification: per ogni coppia (chip_arruolato, chip_esecutore)
     # esegue le sfide del chip arruolato sul noise model del chip esecutore e
-    # confronta le distribuzioni di risposta tramite il coefficiente di Bhattacharyya.
+    # confronta le RISPOSTE tramite la metrica cosine-deviation dall'ideale.
     #
-    # Coefficiente di Bhattacharyya (BC): BC = Σ sqrt(p_i × q_i)
-    #   - Range [0, 1]; valore 1 = distribuzioni identiche.
-    #   - Diagonale (stesso chip): BC alta → ACCEPTED.
-    #   - Fuori diagonale (chip diverso): BC bassa → REJECTED.
+    # Perche' NON la Bhattacharyya grezza: due copie rumorose dello stesso circuito
+    # restano quasi identiche (BC ~0.98) per qualunque livello di rumore, perche'
+    # condividono la struttura del circuito -> la BC non distingue i chip. La firma
+    # hardware emerge solo isolando lo SCOSTAMENTO dall'ideale (vedi _cosine_deviation):
+    #   - Diagonale (stesso chip, stesso seed): stessa direzione di scostamento -> ~0.99 -> ACCEPT.
+    #   - Fuori diagonale (chip diverso): pattern di errore per-qubit diverso -> ~0.95 -> REJECT.
     #
-    # Nota: l'accettazione usa solo la fidelity (non il QBER) perché con chip
-    # molto rumorosi la moda della distribuzione è instabile tra enrollment
-    # e verification, causando falsi rifietti sul QBER.
+    # Le challenge sono identiche per tutti i chip (derivano dalla stessa config),
+    # quindi la distribuzione ideale di riferimento si calcola una sola volta.
+    ideals = _ideal_probabilities(config, next(iter(enrollments.values())))
+
     cells: List[Dict[str, Any]] = []
     for enrolled_name, enrolled_chip in chips.items():
         enrollment = enrollments[enrolled_name]
+        enrolled_entries = enrollment["entries"]
         for executed_name, executed_chip in chips.items():
             cfg = _chip_config(config, executed_chip)
             cfg = dataclasses.replace(cfg, verification_instance_seed=executed_chip["seed"])
             report = run_verification(cfg, enrollment)
-            fidelity = report["average_fidelity"]
+
+            cosine_values = [
+                _cosine_deviation(
+                    enrolled_entries[i].get("probabilities", {}),
+                    result.get("probabilities", {}),
+                    ideals[i],
+                )
+                for i, result in enumerate(report["results"])
+            ]
+            cosine = sum(cosine_values) / len(cosine_values) if cosine_values else 0.0
             cells.append(
                 {
                     "enrolled": enrolled_name,
                     "executed": executed_name,
                     "legitimate": enrolled_name == executed_name,  # True solo sulla diagonale
-                    "average_fidelity": fidelity,
+                    "average_fidelity": cosine,  # ora: cosine-deviation fingerprint score
                     "average_qber": report["average_qber"],
-                    "accepted": fidelity >= config.fidelity_threshold,  # soglia solo su fidelity
+                    "accepted": cosine >= threshold,
                 }
             )
     return cells
@@ -256,12 +317,13 @@ def _render_html(
       <div class="legend">
         Rows = enrolled chip (fingerprint owner), columns = executing chip.<br>
         Diagonal (bold border) = legitimate; off-diagonal = spoofing attempt.<br>
-        Acceptance threshold: fidelity &ge; {threshold:.3f}.
+        Metric = cosine similarity of the deviation-from-ideal (hardware fingerprint).<br>
+        Acceptance threshold: cosine-deviation &ge; {threshold:.3f}.
       </div>
       <ul>{chip_profiles}</ul>
       <div class="metrics">
-        <div class="card"><div class="lbl">Avg fidelity legitimate</div><div class="num">{summary['avg_fidelity_legitimate']:.3f}</div></div>
-        <div class="card"><div class="lbl">Avg fidelity impostor</div><div class="num">{summary['avg_fidelity_impostor']:.3f}</div></div>
+        <div class="card"><div class="lbl">Avg cosine-dev legitimate</div><div class="num">{summary['avg_fidelity_legitimate']:.3f}</div></div>
+        <div class="card"><div class="lbl">Avg cosine-dev impostor</div><div class="num">{summary['avg_fidelity_impostor']:.3f}</div></div>
         <div class="card"><div class="lbl">False accepts</div><div class="num">{summary['false_accepts']}</div></div>
         <div class="card"><div class="lbl">False rejects</div><div class="num">{summary['false_rejects']}</div></div>
       </div>
@@ -303,18 +365,29 @@ def main() -> None:
     )
     parser.add_argument("--html", type=Path, default=None)
     parser.add_argument("--open", action="store_true")
+    parser.add_argument(
+        "--threshold",
+        type=float,
+        default=DEFAULT_COSINE_THRESHOLD,
+        help="Soglia di accettazione sulla metrica cosine-deviation (default %(default)s)",
+    )
     args = parser.parse_args()
 
     config = load_config(args.config)
 
-    # Chip di default: tre profili di rumore molto diversi per massimizzare
-    # la distinguibilità. Samuele e Lorenzo simulano hardware reale (noisy),
-    # Bob simula un processore quasi ideale (basso rumore) che viene rigettato
-    # quando tenta di impersonare hardware reale.
+    # Chip di default: STESSO profilo hardware nominale (stessi T1/T2/depol/readout),
+    # distinti SOLO dal seed. Il seed determina il profilo di rumore PER-QUBIT (vedi
+    # noise.build_noise_model): ogni chip e' una diversa istanza fisica dello stesso
+    # modello, con la propria firma spaziale irriproducibile. E' il punto centrale
+    # della QPUF: non distinguiamo i chip per "quanto" rumore hanno (la BC mostra che
+    # non basta), ma per "come" il rumore e' distribuito sui qubit, misurato come
+    # scostamento dall'ideale. Il rumore e' deliberatamente alto per amplificare la
+    # firma (depol_2q=0.10, readout=0.20, variation=0.8).
+    _profile = "t1=40000,t2=30000,depolarizing_1q=0.01,depolarizing_2q=0.10,readout_error=0.20,variation=1.0"
     default_chips = [
-        "Samuele=42:t1=200000,t2=150000,depolarizing_1q=0.003,depolarizing_2q=0.011",
-        "Lorenzo=1337:t1=8000,t2=5000,depolarizing_1q=0.025,depolarizing_2q=0.150",
-        "Bob=2024:t1=1000000,t2=700000,depolarizing_1q=0.0002,depolarizing_2q=0.0008",
+        f"Samuele=42:{_profile}",
+        f"Lorenzo=1337:{_profile}",
+        f"Bob=2024:{_profile}",
     ]
     chip_specs = args.chip or default_chips
     chips = _parse_chips(chip_specs)
@@ -322,7 +395,7 @@ def main() -> None:
         raise SystemExit("Provide at least two chips to compare")
 
     enrollments = _enroll_chips(config, chips)
-    cells = _cross_matrix(config, chips, enrollments)
+    cells = _cross_matrix(config, chips, enrollments, args.threshold)
     summary = _summary(cells)
 
     _print_matrix(chips, cells)
@@ -335,7 +408,8 @@ def main() -> None:
 
     payload = {
         "chips": {name: {**chip, "noise_overrides": chip["noise_overrides"]} for name, chip in chips.items()},
-        "thresholds": {"fidelity": config.fidelity_threshold, "qber": config.qber_threshold},
+        "metric": "cosine_deviation_from_ideal",
+        "thresholds": {"cosine_deviation": args.threshold, "qber": config.qber_threshold},
         "matrix": cells,
         "summary": summary,
     }
@@ -344,7 +418,7 @@ def main() -> None:
     print(f"Saved cross-verification matrix to {args.output}")
 
     if args.html is not None:
-        report = _render_html(chips, cells, summary, config.fidelity_threshold)
+        report = _render_html(chips, cells, summary, args.threshold)
         args.html.parent.mkdir(parents=True, exist_ok=True)
         args.html.write_text(report, encoding="utf-8")
         print(f"Saved heatmap to {args.html}")

@@ -42,6 +42,7 @@ class NoiseConfig:
     gate_time_1q: float
     gate_time_2q: float
     variation: float
+    readout_error: float = 0.0
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "NoiseConfig":
@@ -53,6 +54,7 @@ class NoiseConfig:
             gate_time_1q=float(data.get("gate_time_1q", 50.0)),
             gate_time_2q=float(data.get("gate_time_2q", 300.0)),
             variation=float(data.get("variation", 0.1)),
+            readout_error=float(data.get("readout_error", 0.0)),
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -64,6 +66,7 @@ class NoiseConfig:
             "gate_time_1q": self.gate_time_1q,
             "gate_time_2q": self.gate_time_2q,
             "variation": self.variation,
+            "readout_error": self.readout_error,
         }
 
 

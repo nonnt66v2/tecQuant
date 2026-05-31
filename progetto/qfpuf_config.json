@@ -1,10 +1,10 @@
 {
   "num_qubits": 4,
-  "depth": 8,
+  "depth": 5,
   "seed": 42,
-  "shots": 512,
+  "shots": 2048,
   "challenge_config": {
-    "count": 8,
+    "count": 24,
     "seed": 123,
     "angle_min": 0.0,
     "angle_max": 6.283185307179586
@@ -19,7 +19,8 @@
     "t2": 150000.0,
     "gate_time_1q": 50.0,
     "gate_time_2q": 300.0,
-    "variation": 0.1
+    "variation": 0.1,
+    "readout_error": 0.0
   },
   "fidelity_threshold": 0.88,
   "qber_threshold": 0.30,
