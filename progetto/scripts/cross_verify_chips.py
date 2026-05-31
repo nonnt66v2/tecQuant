@@ -312,9 +312,9 @@ def main() -> None:
     # Bob simula un processore quasi ideale (basso rumore) che viene rigettato
     # quando tenta di impersonare hardware reale.
     default_chips = [
-        "Samuele=42:t1=25000,t2=35000,depolarizing_1q=0.008,depolarizing_2q=0.08",
-        "Lorenzo=1337:t1=8000,t2=12000,depolarizing_1q=0.015,depolarizing_2q=0.22",
-        "Bob=2024:t1=600000,t2=800000,depolarizing_1q=0.00005,depolarizing_2q=0.0003",
+        "Samuele=42:t1=70000,t2=70000,depolarizing_1q=0.005,depolarizing_2q=0.015",
+        "Lorenzo=1337:t1=35000,t2=28000,depolarizing_1q=0.009,depolarizing_2q=0.032",
+        "Bob=2024:t1=600000,t2=400000,depolarizing_1q=0.0001,depolarizing_2q=0.0008",
     ]
     chip_specs = args.chip or default_chips
     chips = _parse_chips(chip_specs)

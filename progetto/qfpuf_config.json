@@ -10,16 +10,16 @@
     "angle_max": 6.283185307179586
   },
   "challenges": null,
-  "enrollment_instance_seed": 42,
-  "verification_instance_seed": 42,
+  "enrollment_instance_seed": 43,
+  "verification_instance_seed": 44,
   "noise": {
     "depolarizing_1q": 0.005,
-    "depolarizing_2q": 0.03,
-    "t1": 50000.0,
+    "depolarizing_2q": 0.015,
+    "t1": 70000.0,
     "t2": 70000.0,
     "gate_time_1q": 50.0,
     "gate_time_2q": 300.0,
-    "variation": 0.15
+    "variation": 0.1
   },
   "fidelity_threshold": 0.88,
   "qber_threshold": 0.30,
