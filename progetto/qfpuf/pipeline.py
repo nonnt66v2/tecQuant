@@ -41,7 +41,7 @@ def run_enrollment(config: QFPUFConfig) -> Dict[str, Any]:
     config.validate()
     challenges = _resolve_challenges(config)
     noise_model, noise_parameters = build_noise_model(
-        config.noise, config.enrollment_instance_seed
+        config.noise, config.enrollment_instance_seed, config.num_qubits
     )
 
     entries = []
@@ -77,7 +77,7 @@ def run_verification(
 ) -> Dict[str, Any]:
     config.validate()
     noise_model, noise_parameters = build_noise_model(
-        config.noise, config.verification_instance_seed
+        config.noise, config.verification_instance_seed, config.num_qubits
     )
 
     results = []

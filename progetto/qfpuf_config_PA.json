@@ -1,0 +1,30 @@
+{
+  "num_qubits": 4,
+  "depth": 5,
+  "seed": 42,
+  "shots": 2048,
+  "challenge_config": {
+    "count": 24,
+    "seed": 123,
+    "angle_min": 0.0,
+    "angle_max": 6.283185307179586
+  },
+  "challenges": null,
+  "enrollment_instance_seed": 43,
+  "verification_instance_seed": 44,
+  "noise": {
+    "depolarizing_1q": 0.003,
+    "depolarizing_2q": 0.011,
+    "t1": 200000.0,
+    "t2": 150000.0,
+    "gate_time_1q": 50.0,
+    "gate_time_2q": 300.0,
+    "variation": 0.1,
+    "readout_error": 0.0
+  },
+  "fidelity_threshold": 0.88,
+  "qber_threshold": 0.30,
+  "output_dir": "progetto/risultati/qfpuf",
+  "enrollment_db_path": "progetto/risultati/qfpuf/qfpuf_enrollment.json",
+  "verification_report_path": "progetto/risultati/qfpuf/qfpuf_verification.json"
+}
