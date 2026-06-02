@@ -1,0 +1,126 @@
+{
+  "chips": {
+    "Samuele": {
+      "seed": 42,
+      "noise_overrides": {
+        "t1": 40000.0,
+        "t2": 30000.0,
+        "depolarizing_1q": 0.01,
+        "depolarizing_2q": 0.1,
+        "readout_error": 0.2,
+        "variation": 1.0
+      }
+    },
+    "Lorenzo": {
+      "seed": 1337,
+      "noise_overrides": {
+        "t1": 40000.0,
+        "t2": 30000.0,
+        "depolarizing_1q": 0.01,
+        "depolarizing_2q": 0.1,
+        "readout_error": 0.2,
+        "variation": 1.0
+      }
+    },
+    "Bob": {
+      "seed": 2024,
+      "noise_overrides": {
+        "t1": 40000.0,
+        "t2": 30000.0,
+        "depolarizing_1q": 0.01,
+        "depolarizing_2q": 0.1,
+        "readout_error": 0.2,
+        "variation": 1.0
+      }
+    }
+  },
+  "metric": "cosine_deviation_from_ideal",
+  "thresholds": {
+    "cosine_deviation": 0.975,
+    "qber": 0.3
+  },
+  "matrix": [
+    {
+      "enrolled": "Samuele",
+      "executed": "Samuele",
+      "legitimate": true,
+      "average_fidelity": 0.9946137519743171,
+      "average_qber": 0.11458333333333333,
+      "accepted": true
+    },
+    {
+      "enrolled": "Samuele",
+      "executed": "Lorenzo",
+      "legitimate": false,
+      "average_fidelity": 0.9585372270222554,
+      "average_qber": 0.25,
+      "accepted": false
+    },
+    {
+      "enrolled": "Samuele",
+      "executed": "Bob",
+      "legitimate": false,
+      "average_fidelity": 0.9250299103217037,
+      "average_qber": 0.3854166666666667,
+      "accepted": false
+    },
+    {
+      "enrolled": "Lorenzo",
+      "executed": "Samuele",
+      "legitimate": false,
+      "average_fidelity": 0.9611420929635605,
+      "average_qber": 0.2916666666666667,
+      "accepted": false
+    },
+    {
+      "enrolled": "Lorenzo",
+      "executed": "Lorenzo",
+      "legitimate": true,
+      "average_fidelity": 0.9935834596618839,
+      "average_qber": 0.07291666666666667,
+      "accepted": true
+    },
+    {
+      "enrolled": "Lorenzo",
+      "executed": "Bob",
+      "legitimate": false,
+      "average_fidelity": 0.9528600495079528,
+      "average_qber": 0.3541666666666667,
+      "accepted": false
+    },
+    {
+      "enrolled": "Bob",
+      "executed": "Samuele",
+      "legitimate": false,
+      "average_fidelity": 0.9271462749502799,
+      "average_qber": 0.4375,
+      "accepted": false
+    },
+    {
+      "enrolled": "Bob",
+      "executed": "Lorenzo",
+      "legitimate": false,
+      "average_fidelity": 0.953064150719641,
+      "average_qber": 0.28125,
+      "accepted": false
+    },
+    {
+      "enrolled": "Bob",
+      "executed": "Bob",
+      "legitimate": true,
+      "average_fidelity": 0.9943034336055357,
+      "average_qber": 0.10416666666666667,
+      "accepted": true
+    }
+  ],
+  "summary": {
+    "legitimate_pairs": 3,
+    "impostor_pairs": 6,
+    "avg_fidelity_legitimate": 0.9941668817472457,
+    "avg_fidelity_impostor": 0.9462966175808988,
+    "avg_qber_legitimate": 0.09722222222222222,
+    "avg_qber_impostor": 0.3333333333333333,
+    "false_rejects": 0,
+    "false_accepts": 0
+  }
+}
