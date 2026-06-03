@@ -45,8 +45,7 @@ BASE_PROFILE = dict(
 )
 
 # I tre chip simulati, distinti solo dal seed (= diversa istanza fisica).
-# Eve e Mallory sono nomi convenzionali della crittografia per attaccanti.
-CHIP_SEEDS = {"Samuele": 42, "Lorenzo": 1337, "Bob": 2024}
+CHIP_SEEDS = {"Samuele": 42, "Lorenzo": 1337, "Caterina": 2024}
 
 # Soglia di accettazione cosine-deviation calibrata sul regime PA.
 THRESHOLD = 0.975
@@ -239,9 +238,8 @@ def main():
     print("  -> salvato rob_metric_compare.png")
 
     # [6/6] Scalabilita': verifica che il protocollo funzioni oltre i 3 chip di default.
-    # Eve e Mallory sono nomi convenzionali della crittografia per attaccanti.
     print("[6/6] Scalabilita': matrice a 5 chip")
-    seeds5 = {"Samuele": 42, "Lorenzo": 1337, "Bob": 2024, "Eve": 777, "Mallory": 9001}
+    seeds5 = {"Samuele": 42, "Lorenzo": 1337, "Caterina": 2024, "Franco": 777, "Christian": 9001}
     s5 = _matrix(config, seeds5, BASE_PROFILE)
     lo, hi, _, _ = _separation(s5, seeds5)
     names5 = list(seeds5)

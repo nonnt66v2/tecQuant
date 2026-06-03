@@ -182,13 +182,13 @@ def _matrix_lookup(cells: List[Dict[str, Any]]) -> Dict[Tuple[str, str], Dict[st
 
 
 def _print_matrix(chips: Dict[str, Dict[str, Any]], cells: List[Dict[str, Any]]) -> None:
-    # Stampa la matrice di fidelity e la matrice di accettazione (1=OK, 0=REJECT)
+    # Stampa la matrice cosine-deviation e la matrice di accettazione (1=OK, 0=REJECT)
     # in formato testuale sulla console.
     lookup = _matrix_lookup(cells)
     names = list(chips)
     width = max((len(name) for name in names), default=4) + 2
 
-    print("Fidelity matrix:")
+    print("Cosine-deviation matrix:")
     header = "enroll \\ exec".ljust(width) + "".join(name.ljust(width) for name in names)
     print(header)
     for enrolled in names:
@@ -387,7 +387,7 @@ def main() -> None:
     default_chips = [
         f"Samuele=42:{_profile}",
         f"Lorenzo=1337:{_profile}",
-        f"Bob=2024:{_profile}",
+        f"Caterina=2024:{_profile}",
     ]
     chip_specs = args.chip or default_chips
     chips = _parse_chips(chip_specs)
