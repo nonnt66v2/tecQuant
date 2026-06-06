@@ -2,3 +2,10 @@
 *.pyc
 __pycache__/
 /prog2
+/slides
+/venv
+/.idea
+/appunti
+/lab
+
+

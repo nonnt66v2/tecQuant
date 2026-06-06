@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>QFPUF - Report confronto</title>
+  <style>
+    body {
+      font-family: "Inter", "Segoe UI", Arial, sans-serif;
+      margin: 24px;
+      color: #1b1b1b;
+      background: #ffffff;
+    }
+    h1 {
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      color: #5a5a5a;
+      margin-top: 0;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 12px;
+      color: #ffffff;
+    }
+    .accepted {
+      background: #2f9e44;
+    }
+    .rejected {
+      background: #d9480f;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid #e1e1e1;
+      padding: 8px 10px;
+      vertical-align: top;
+    }
+    th {
+      background: #f4f6f8;
+      text-align: left;
+    }
+    .summary-table td {
+      width: 50%;
+    }
+    .match-true {
+      background: #f3fff3;
+    }
+    .match-false {
+      background: #fff2f2;
+    }
+    .section {
+      margin-top: 28px;
+    }
+    .note {
+      color: #5a5a5a;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <h1>QFPUF - Report confronto risultati</h1>
+  <p class="subtitle">Generato il 2026-05-29T13:27:50+00:00</p>
+
+  <div class="section">
+    <span class="badge accepted">ACCETTATO</span>
+    <table class="summary-table">
+      <tr><th>Totale entry</th><td>8</td></tr>
+      <tr><th>Risposte match</th><td>5</td></tr>
+      <tr><th>Risposte mismatch</th><td>3</td></tr>
+      <tr><th>Fidelity media</th><td>0.9806</td></tr>
+      <tr><th>QBER medio</th><td>0.1250</td></tr>
+      <tr><th>Soglia fidelity</th><td>0.9</td></tr>
+      <tr><th>Soglia QBER</th><td>0.2</td></tr>
+      <tr><th>Mismatch</th><td>1, 2, 7</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Dettaglio per challenge</h2>
+    <p class="note">Le righe rosse indicano mismatch tra expected e received.</p>
+    <table>
+      <tr>
+        <th>#</th>
+        <th>Bitstring</th>
+        <th>Angoli</th>
+        <th>Risposta enrollment</th>
+        <th>Risposta expected</th>
+        <th>Risposta received</th>
+        <th>Match</th>
+        <th>Fidelity</th>
+        <th>QBER</th>
+        <th>Dominant (enroll)</th>
+        <th>Dominant (verify)</th>
+      </tr>
+      <tr class='match-true'><td>0</td><td>0101</td><td>1.675, 5.268, 5.497, 2.382</td><td>0011</td><td>0011</td><td>0011</td><td>SI</td><td>0.9782</td><td>0.0000</td><td>0011</td><td>0011</td></tr><tr class='match-false'><td>1</td><td>1100</td><td>0.849, 3.525, 4.409, 1.029</td><td>1000</td><td>1000</td><td>1010</td><td>NO</td><td>0.9753</td><td>0.2500</td><td>1000</td><td>1010</td></tr><tr class='match-false'><td>2</td><td>1010</td><td>0.041, 4.600, 0.641, 0.276</td><td>1101</td><td>1101</td><td>1001</td><td>NO</td><td>0.9828</td><td>0.2500</td><td>1101</td><td>1001</td></tr><tr class='match-true'><td>3</td><td>0001</td><td>5.725, 3.603, 1.667, 5.264</td><td>1110</td><td>1110</td><td>1110</td><td>SI</td><td>0.9859</td><td>0.0000</td><td>1110</td><td>1110</td></tr><tr class='match-true'><td>4</td><td>1110</td><td>5.160, 4.013, 3.549, 6.035</td><td>0111</td><td>0111</td><td>0111</td><td>SI</td><td>0.9659</td><td>0.0000</td><td>0111</td><td>0111</td></tr><tr class='match-true'><td>5</td><td>0111</td><td>3.271, 2.636, 3.205, 5.324</td><td>1101</td><td>1101</td><td>1101</td><td>SI</td><td>0.9859</td><td>0.0000</td><td>1101</td><td>1101</td></tr><tr class='match-true'><td>6</td><td>0011</td><td>1.069, 2.117, 2.458, 0.460</td><td>0011</td><td>0011</td><td>0011</td><td>SI</td><td>0.9848</td><td>0.0000</td><td>0011</td><td>0011</td></tr><tr class='match-false'><td>7</td><td>1110</td><td>1.188, 0.554, 3.948, 0.081</td><td>1010</td><td>1010</td><td>1100</td><td>NO</td><td>0.9859</td><td>0.5000</td><td>1010</td><td>1100</td></tr>
+    </table>
+  </div>
+</body>
+</html>
